@@ -17,7 +17,7 @@ class Batch:
     quantity: int
     eta: date | None = None
 
-    def decrement(self, quantity: int):
+    def allocate(self, quantity: int):
         if quantity > self.quantity:
             raise CannotAllocateBatchException
 
@@ -53,13 +53,13 @@ class Allocator:
         warehouse_batches = available_batches.warehouse_batches().first()
 
         if warehouse_batches:
-            warehouse_batches.decrement(order_line.quantity)
+            warehouse_batches.allocate(order_line.quantity)
             return
 
         due_batch = available_batches.shipment_batches().sort_by_eta().first()
 
         if due_batch:
-            due_batch.decrement(order_line.quantity)
+            due_batch.allocate(order_line.quantity)
 
     def get_batch(self, reference: str):
         [current_batch] = filter(
