@@ -13,8 +13,9 @@ later = tomorrow + timedelta(days=10)
 def batches() -> list[Batch]:
     return [
         Batch(reference="first-batch", sku="RED-CHAIR", quantity=10, eta=tomorrow),
-        Batch(reference="second-batch", sku="TASTELESS-LAMP", quantity=1),
+        Batch(reference="second-batch", sku="TASTELESS-LAMP", quantity=1, eta=later),
         Batch(reference="third-batch", sku="RED-CHAIR", quantity=10),
+        Batch(reference="fourth-batch", sku="TASTELESS-LAMP", quantity=1, eta=tomorrow),
     ]
 
 
@@ -78,5 +79,16 @@ def test_prefers_warehouse_batches_to_shipments(batches: list[Batch]):
     )
 
 
-def test_prefers_earlier_batches():
-    pytest.fail("todo")
+def test_prefers_earlier_batches(batches: list[Batch]):
+    allocator = Allocator(batches)
+
+    order_line = OrderLine(sku="TASTELESS-LAMP", quantity=1)
+
+    allocator.allocate(order_line)
+
+    assert allocator.get_batch(reference="fourth-batch") == Batch(
+        reference="fourth-batch",
+        sku="TASTELESS-LAMP",
+        quantity=0,
+        eta=tomorrow,
+    )

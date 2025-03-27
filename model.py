@@ -42,15 +42,28 @@ class Batch:
 
 class Allocator:
     def __init__(self, batches: list[Batch]) -> None:
-        self.batches = batches
+        self.batches: list[Batch] = batches
 
     def allocate(self, order_line: OrderLine) -> None:
-        [current_batch, *tail] = filter(
-            lambda b: b.sku == order_line.sku and b.eta is None,
-            self.batches,
+        available_batches = list(
+            filter(
+                lambda b: b.sku == order_line.sku,
+                self.batches,
+            )
+        )
+        warehouse_batches = list(filter(lambda b: b.eta is None, available_batches))
+
+        if len(warehouse_batches):
+            warehouse_batches[0].decrement(order_line.quantity)
+            return
+
+        shipment_batches = list(filter(lambda b: b.eta is not None, available_batches))
+        [due_batch, *_tail] = sorted(
+            shipment_batches,
+            key=lambda batch: batch.eta or "",
         )
 
-        current_batch.decrement(order_line.quantity)
+        due_batch.decrement(order_line.quantity)
 
     def get_batch(self, reference: str):
         [current_batch] = filter(
