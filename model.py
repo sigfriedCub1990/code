@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from exceptions import CannotAllocateBatchException
+from .exceptions import CannotAllocateBatchException
 
 
 @dataclass(kw_only=True)
@@ -42,10 +42,10 @@ class Allocator:
     def __init__(self, batches: list[Batch]) -> None:
         self.batches = batches
 
-    def allocate(self, batch: Batch) -> None:
-        [current_batch] = filter(lambda b: b.reference == batch.reference, self.batches)
+    def allocate(self, order_line: OrderLine) -> None:
+        [current_batch] = filter(lambda b: b.sku == order_line.sku, self.batches)
 
-        current_batch.decrement(batch.quantity)
+        current_batch.decrement(order_line.quantity)
 
     def get_batch(self, reference: str):
         [current_batch] = filter(
