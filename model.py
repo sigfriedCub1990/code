@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from .exceptions import CannotAllocateBatchException
 
@@ -30,6 +31,7 @@ class Batch:
     reference: str
     sku: str
     quantity: int
+    eta: datetime = datetime.now()
 
     def decrement(self, quantity: int):
         if quantity > self.quantity:

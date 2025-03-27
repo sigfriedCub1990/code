@@ -29,10 +29,6 @@ def test_allocating_to_a_batch_reduces_the_available_quantity(batches: list[Batc
     )
 
 
-def test_can_allocate_if_available_greater_than_required():
-    pytest.fail("todo")
-
-
 def test_cannot_allocate_if_available_smaller_than_required(batches: list[Batch]):
     allocator = Allocator(batches)
 
@@ -42,8 +38,28 @@ def test_cannot_allocate_if_available_smaller_than_required(batches: list[Batch]
         allocator.allocate(order_line)
 
 
-def test_can_allocate_if_available_equal_to_required():
-    pytest.fail("todo")
+def test_can_allocate_if_available_greater_than_required(batches: list[Batch]):
+    allocator = Allocator(batches)
+
+    order_line = OrderLine(sku="RED-CHAIR", quantity=6)
+
+    allocator.allocate(order_line)
+
+    assert allocator.get_batch(reference="first-batch") == Batch(
+        reference="first-batch", sku="RED-CHAIR", quantity=4
+    )
+
+
+def test_can_allocate_if_available_equal_to_required(batches: list[Batch]):
+    allocator = Allocator(batches)
+
+    order_line = OrderLine(sku="RED-CHAIR", quantity=10)
+
+    allocator.allocate(order_line)
+
+    assert allocator.get_batch(reference="first-batch") == Batch(
+        reference="first-batch", sku="RED-CHAIR", quantity=0
+    )
 
 
 def test_prefers_warehouse_batches_to_shipments():
