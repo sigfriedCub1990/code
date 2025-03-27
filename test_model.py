@@ -12,8 +12,9 @@ later = tomorrow + timedelta(days=10)
 @pytest.fixture
 def batches() -> list[Batch]:
     return [
-        Batch(reference="first-batch", sku="RED-CHAIR", quantity=10),
+        Batch(reference="first-batch", sku="RED-CHAIR", quantity=10, eta=tomorrow),
         Batch(reference="second-batch", sku="TASTELESS-LAMP", quantity=1),
+        Batch(reference="third-batch", sku="RED-CHAIR", quantity=10),
     ]
 
 
@@ -24,8 +25,8 @@ def test_allocating_to_a_batch_reduces_the_available_quantity(batches: list[Batc
 
     allocator.allocate(order_line)
 
-    assert allocator.get_batch(reference="first-batch") == Batch(
-        reference="first-batch", sku="RED-CHAIR", quantity=8
+    assert allocator.get_batch(reference="third-batch") == Batch(
+        reference="third-batch", sku="RED-CHAIR", quantity=8
     )
 
 
@@ -45,25 +46,36 @@ def test_can_allocate_if_available_greater_than_required(batches: list[Batch]):
 
     allocator.allocate(order_line)
 
-    assert allocator.get_batch(reference="first-batch") == Batch(
-        reference="first-batch", sku="RED-CHAIR", quantity=4
+    assert allocator.get_batch(reference="third-batch") == Batch(
+        reference="third-batch", sku="RED-CHAIR", quantity=4
     )
 
 
 def test_can_allocate_if_available_equal_to_required(batches: list[Batch]):
     allocator = Allocator(batches)
 
-    order_line = OrderLine(sku="RED-CHAIR", quantity=10)
+    order_line = OrderLine(sku="RED-CHAIR", quantity=6)
 
     allocator.allocate(order_line)
 
-    assert allocator.get_batch(reference="first-batch") == Batch(
-        reference="first-batch", sku="RED-CHAIR", quantity=0
+    assert allocator.get_batch(reference="third-batch") == Batch(
+        reference="third-batch", sku="RED-CHAIR", quantity=4
     )
 
 
-def test_prefers_warehouse_batches_to_shipments():
-    pytest.fail("todo")
+def test_prefers_warehouse_batches_to_shipments(batches: list[Batch]):
+    allocator = Allocator(batches)
+
+    order_line = OrderLine(sku="RED-CHAIR", quantity=6)
+
+    allocator.allocate(order_line)
+
+    assert allocator.get_batch(reference="third-batch") == Batch(
+        reference="third-batch",
+        sku="RED-CHAIR",
+        quantity=4,
+        eta=None,
+    )
 
 
 def test_prefers_earlier_batches():

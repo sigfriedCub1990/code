@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date
 
 from .exceptions import CannotAllocateBatchException
 
@@ -31,7 +31,7 @@ class Batch:
     reference: str
     sku: str
     quantity: int
-    eta: datetime = datetime.now()
+    eta: date | None = None
 
     def decrement(self, quantity: int):
         if quantity > self.quantity:
@@ -45,7 +45,10 @@ class Allocator:
         self.batches = batches
 
     def allocate(self, order_line: OrderLine) -> None:
-        [current_batch] = filter(lambda b: b.sku == order_line.sku, self.batches)
+        [current_batch, *tail] = filter(
+            lambda b: b.sku == order_line.sku and b.eta is None,
+            self.batches,
+        )
 
         current_batch.decrement(order_line.quantity)
 
