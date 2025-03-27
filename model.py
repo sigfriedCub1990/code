@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from exceptions import CannotAllocateBatchException
+
 
 @dataclass(kw_only=True)
 class Customer:
@@ -30,6 +32,9 @@ class Batch:
     quantity: int
 
     def decrement(self, quantity: int):
+        if quantity > self.quantity:
+            raise CannotAllocateBatchException
+
         self.quantity -= quantity
 
 

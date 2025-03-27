@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 import pytest
 
+from exceptions import CannotAllocateBatchException
 from model import Allocator, Batch
 
 today = date.today()
@@ -32,8 +33,13 @@ def test_can_allocate_if_available_greater_than_required():
     pytest.fail("todo")
 
 
-def test_cannot_allocate_if_available_smaller_than_required():
-    pytest.fail("todo")
+def test_cannot_allocate_if_available_smaller_than_required(batches):
+    allocator = Allocator(batches)
+
+    batch = Batch(reference="first-batch", sku="RED-CHAIR", quantity=12)
+
+    with pytest.raises(CannotAllocateBatchException):
+        allocator.allocate(batch)
 
 
 def test_can_allocate_if_available_equal_to_required():
