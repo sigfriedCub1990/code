@@ -40,30 +40,42 @@ class Batch:
         self.quantity -= quantity
 
 
+class BatchList(list[Batch]):
+    def warehouse_batches(self):
+        return BatchList(list(filter(lambda b: b.eta is None, self)))
+
+    def shipment_batches(self):
+        return BatchList(list(filter(lambda b: b.eta is not None, self)))
+
+    def get_by_sku(self, sku: str):
+        return BatchList(list(filter(lambda b: b.sku == sku, self)))
+
+    def sort_by_eta(self):
+        return BatchList(sorted(self, key=lambda batch: batch.eta or ""))
+
+    def first(self):
+        if self:
+            return self[0]
+        return None
+
+
 class Allocator:
     def __init__(self, batches: list[Batch]) -> None:
-        self.batches: list[Batch] = batches
+        self.batches: BatchList = BatchList(batches)
 
     def allocate(self, order_line: OrderLine) -> None:
-        available_batches = list(
-            filter(
-                lambda b: b.sku == order_line.sku,
-                self.batches,
-            )
-        )
-        warehouse_batches = list(filter(lambda b: b.eta is None, available_batches))
+        available_batches = self.batches.get_by_sku(order_line.sku)
 
-        if len(warehouse_batches):
-            warehouse_batches[0].decrement(order_line.quantity)
+        warehouse_batches = available_batches.warehouse_batches().first()
+
+        if warehouse_batches:
+            warehouse_batches.decrement(order_line.quantity)
             return
 
-        shipment_batches = list(filter(lambda b: b.eta is not None, available_batches))
-        [due_batch, *_tail] = sorted(
-            shipment_batches,
-            key=lambda batch: batch.eta or "",
-        )
+        due_batch = available_batches.shipment_batches().sort_by_eta().first()
 
-        due_batch.decrement(order_line.quantity)
+        if due_batch:
+            due_batch.decrement(order_line.quantity)
 
     def get_batch(self, reference: str):
         [current_batch] = filter(
