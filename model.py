@@ -5,25 +5,9 @@ from .exceptions import CannotAllocateBatchException
 
 
 @dataclass(kw_only=True)
-class Customer:
-    delivery_address: str
-
-
-@dataclass(kw_only=True)
-class Product:
-    sku: str
-
-
-@dataclass(kw_only=True)
 class OrderLine:
     sku: str
     quantity: int
-
-
-@dataclass(kw_only=True)
-class Order:
-    id: str
-    lines: list[OrderLine]
 
 
 @dataclass(kw_only=True)
