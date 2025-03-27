@@ -1,0 +1,3 @@
+[tool.pytest-watcher]
+clear = true
+now = true
