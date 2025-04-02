@@ -4,6 +4,7 @@ from datetime import date
 
 @dataclass(kw_only=True, frozen=True)
 class OrderLine:
+    order_reference: str
     sku: str
     quantity: int
 
@@ -13,7 +14,7 @@ class Batch:
     sku: str
     quantity: int
     eta: date | None
-    _order_lines: list[OrderLine]
+    _orders: list[str]
 
     def __init__(
         self,
@@ -26,15 +27,15 @@ class Batch:
         self.sku = sku
         self.quantity = quantity
         self.eta = eta
-        self._order_lines = []
+        self._orders = []
 
     def allocate(self, order_line: OrderLine):
         if self.can_allocate(order_line):
             self.quantity -= order_line.quantity
-            self._order_lines.append(order_line)
+            self._orders.append(order_line.order_reference)
 
     def can_allocate(self, order_line: OrderLine):
-        if order_line in self._order_lines:
+        if order_line.order_reference in self._orders:
             return False
 
         return self.sku == order_line.sku and self.quantity >= order_line.quantity
