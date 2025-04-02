@@ -20,7 +20,7 @@ def test_allocating_to_a_batch_reduces_the_available_quantity():
 
     batch.allocate(line)
 
-    assert batch.quantity == 2
+    assert batch.available_quantity == 2
 
 
 def test_trying_to_allocate_a_greater_quantity_than_available_does_nothing():
@@ -31,7 +31,7 @@ def test_trying_to_allocate_a_greater_quantity_than_available_does_nothing():
 
     batch.allocate(line)
 
-    assert batch.quantity == 10
+    assert batch.available_quantity == 10
 
 
 def test_can_allocate_if_available_greater_than_required():
@@ -76,7 +76,27 @@ def test_can_not_allocate_order_line_twice():
     batch.allocate(line_1)
     batch.allocate(line_2)
 
-    assert batch.quantity == 8
+    assert batch.available_quantity == 8
+
+
+def test_can_only_deallocate_allocated_lines():
+    batch, line = make_batch_and_line(sku="RED-CHAIR", batch_qty=10, line_qty=8)
+
+    batch.deallocate(line)
+
+    assert batch.available_quantity == 10
+
+
+def test_deallocating_an_allocated_line_increments_batch_quantity():
+    batch, line = make_batch_and_line(sku="RED-CHAIR", batch_qty=10, line_qty=8)
+
+    batch.allocate(line)
+
+    assert batch.available_quantity == 2
+
+    batch.deallocate(line)
+
+    assert batch.available_quantity == 10
 
 
 # def test_prefers_warehouse_batches_to_shipments():

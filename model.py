@@ -12,9 +12,9 @@ class OrderLine:
 class Batch:
     reference: str
     sku: str
-    quantity: int
     eta: date | None
-    _orders: list[str]
+    _purchased_quantity: int
+    _allocations: set[OrderLine]
 
     def __init__(
         self,
@@ -25,17 +25,31 @@ class Batch:
     ):
         self.reference = reference
         self.sku = sku
-        self.quantity = quantity
+        self._purchased_quantity = quantity
         self.eta = eta
-        self._orders = []
+        self._allocations = set()
 
     def allocate(self, order_line: OrderLine):
         if self.can_allocate(order_line):
-            self.quantity -= order_line.quantity
-            self._orders.append(order_line.order_reference)
+            self._allocations.add(order_line)
+
+    def deallocate(self, line: OrderLine):
+        if line in self._allocations:
+            self._allocations.remove(line)
+
+    @property
+    def available_quantity(self):
+        return self._purchased_quantity - self.allocated_quantity
+
+    @property
+    def allocated_quantity(self):
+        return sum(order.quantity for order in self._allocations)
 
     def can_allocate(self, order_line: OrderLine):
-        if order_line.order_reference in self._orders:
+        if order_line in self._allocations:
             return False
 
-        return self.sku == order_line.sku and self.quantity >= order_line.quantity
+        return (
+            self.sku == order_line.sku
+            and self._purchased_quantity >= order_line.quantity
+        )
