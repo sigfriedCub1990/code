@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+from typing import override
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -53,3 +54,13 @@ class Batch:
             self.sku == order_line.sku
             and self._purchased_quantity >= order_line.quantity
         )
+
+    @override
+    def __eq__(self, other: object):
+        if not isinstance(other, Batch):
+            return False
+        return self.reference == other.reference
+
+    @override
+    def __hash__(self) -> int:
+        return hash(self.reference)

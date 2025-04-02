@@ -1,5 +1,4 @@
 from datetime import date, timedelta
-import pytest
 
 from .model import Batch, OrderLine
 
@@ -68,13 +67,13 @@ def test_can_not_allocate_if_skus_dont_match():
     assert batch.can_allocate(line) is False
 
 
-def test_can_not_allocate_order_line_twice():
-    line_1 = OrderLine(order_reference="order-ref", sku="RED-CHAIR", quantity=2)
-    line_2 = OrderLine(order_reference="order-ref", sku="RED-CHAIR", quantity=2)
-    batch = Batch(reference="batch-1", sku="RED-CHAIR", quantity=10)
+# This test is easy since we keep track of the
+# allocated lines inside a Set (nice)
+def test_allocate_is_idempotent():
+    batch, line = make_batch_and_line(sku="RED-CHAIR", batch_qty=10, line_qty=2)
 
-    batch.allocate(line_1)
-    batch.allocate(line_2)
+    batch.allocate(line)
+    batch.allocate(line)
 
     assert batch.available_quantity == 8
 
