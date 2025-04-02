@@ -54,6 +54,17 @@ def test_allocates_lines_with_same_sku():
     assert batch.can_allocate(order_line) is False
 
 
+def test_can_not_allocate_order_line_twice():
+    order_line = OrderLine(sku="RED-CHAIR", quantity=2)
+    order_line_2 = OrderLine(sku="RED-CHAIR", quantity=2)
+    batch = Batch(reference="batch-1", sku="RED-CHAIR", quantity=10)
+
+    batch.allocate(order_line)
+    batch.allocate(order_line_2)
+
+    assert batch.quantity == 8
+
+
 def test_prefers_warehouse_batches_to_shipments():
     pytest.fail("todo")
 
