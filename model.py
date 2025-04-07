@@ -45,7 +45,7 @@ class Batch:
 
         return (
             self.sku == order_line.sku
-            and self._purchased_quantity >= order_line.quantity
+            and self.available_quantity >= order_line.quantity
         )
 
     @property
