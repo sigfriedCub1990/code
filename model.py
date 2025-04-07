@@ -27,8 +27,8 @@ class Batch:
     ):
         self.reference = reference
         self.sku = sku
-        self._purchased_quantity = quantity
         self.eta = eta
+        self._purchased_quantity = quantity
         self._allocations = set()
 
     def allocate(self, order_line: OrderLine):
@@ -39,14 +39,6 @@ class Batch:
         if line in self._allocations:
             self._allocations.remove(line)
 
-    @property
-    def available_quantity(self):
-        return self._purchased_quantity - self.allocated_quantity
-
-    @property
-    def allocated_quantity(self):
-        return sum(order.quantity for order in self._allocations)
-
     def can_allocate(self, order_line: OrderLine):
         if order_line in self._allocations:
             return False
@@ -55,6 +47,14 @@ class Batch:
             self.sku == order_line.sku
             and self._purchased_quantity >= order_line.quantity
         )
+
+    @property
+    def available_quantity(self):
+        return self._purchased_quantity - self.allocated_quantity
+
+    @property
+    def allocated_quantity(self):
+        return sum(order.quantity for order in self._allocations)
 
     @override
     def __eq__(self, other: object):
