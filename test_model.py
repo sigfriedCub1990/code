@@ -1,3 +1,4 @@
+import pytest
 from datetime import date, timedelta
 
 from .model import Batch, OrderLine, allocate
@@ -98,20 +99,65 @@ def test_deallocating_an_allocated_line_increments_batch_quantity():
     assert batch.available_quantity == 10
 
 
-# def test_prefers_warehouse_batches_to_shipments():
-#     pytest.fail("todo")
+def test_prefers_warehouse_batches_to_shipments():
+    warehouse_batch = Batch(
+        reference="warehouse-batch",
+        sku="RED-CHAIR",
+        quantity=100,
+    )
+    medium = Batch(
+        reference="medium-speed-batch", sku="RED-CHAIR", quantity=100, eta=tomorrow
+    )
+    latest = Batch(
+        reference="slow-batch",
+        sku="RED-CHAIR",
+        quantity=100,
+        eta=later,
+    )
+    line = OrderLine(
+        order_reference="order-ref",
+        sku="RED-CHAIR",
+        quantity=10,
+    )
+
+    allocate(line, [warehouse_batch, medium, latest])
+
+    assert warehouse_batch.available_quantity == 90
+    assert medium.available_quantity == 100
+    assert latest.available_quantity == 100
 
 
 def test_prefers_earlier_batches():
-    earliest = Batch(reference="speedy-batch", sku="RED-CHAIR", quantity=100, eta=today)
-    medium = Batch(
-        reference="speedy-batch", sku="RED-CHAIR", quantity=100, eta=tomorrow
+    earliest = Batch(
+        reference="speedy-batch",
+        sku="RED-CHAIR",
+        quantity=100,
+        eta=today,
     )
-    latest = Batch(reference="speedy-batch", sku="RED-CHAIR", quantity=100, eta=later)
-    line = OrderLine(order_reference="order-ref", sku="RED-CHAIR", quantity=10)
+    medium = Batch(
+        reference="medium-batch",
+        sku="RED-CHAIR",
+        quantity=100,
+        eta=tomorrow,
+    )
+    latest = Batch(
+        reference="slow-batch",
+        sku="RED-CHAIR",
+        quantity=100,
+        eta=later,
+    )
+    line = OrderLine(
+        order_reference="order-ref",
+        sku="RED-CHAIR",
+        quantity=10,
+    )
 
     allocate(line, [earliest, medium, latest])
 
     assert earliest.available_quantity == 90
     assert medium.available_quantity == 100
     assert latest.available_quantity == 100
+
+
+def test_allocate_to_earliest_batch_with_capacity():
+    pytest.xfail("TODO")

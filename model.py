@@ -68,6 +68,16 @@ class Batch:
 
 
 def allocate(line: OrderLine, batches: list[Batch]):
+    warehouse_batches = get_warehouse_batches(batches)
+
+    if len(warehouse_batches):
+        warehouse_batches[0].allocate(line)
+        return
+
     [earlier_batch, *_tail] = sorted(batches, key=attrgetter("eta"))
 
     earlier_batch.allocate(line)
+
+
+def get_warehouse_batches(batches: list[Batch]):
+    return list(filter(lambda x: x.eta is None, batches))
