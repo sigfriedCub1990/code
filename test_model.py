@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from .model import Batch, OrderLine
+from .model import Batch, OrderLine, allocate
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
@@ -102,5 +102,16 @@ def test_deallocating_an_allocated_line_increments_batch_quantity():
 #     pytest.fail("todo")
 
 
-# def test_prefers_earlier_batches():
-#     pytest.fail("todo")
+def test_prefers_earlier_batches():
+    earliest = Batch(reference="speedy-batch", sku="RED-CHAIR", quantity=100, eta=today)
+    medium = Batch(
+        reference="speedy-batch", sku="RED-CHAIR", quantity=100, eta=tomorrow
+    )
+    latest = Batch(reference="speedy-batch", sku="RED-CHAIR", quantity=100, eta=later)
+    line = OrderLine(order_reference="order-ref", sku="RED-CHAIR", quantity=10)
+
+    allocate(line, [earliest, medium, latest])
+
+    assert earliest.available_quantity == 90
+    assert medium.available_quantity == 100
+    assert latest.available_quantity == 100

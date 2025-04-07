@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
+from operator import attrgetter
 from typing import override
 
 
@@ -64,3 +65,9 @@ class Batch:
     @override
     def __hash__(self) -> int:
         return hash(self.reference)
+
+
+def allocate(line: OrderLine, batches: list[Batch]):
+    [earlier_batch, *_tail] = sorted(batches, key=attrgetter("eta"))
+
+    earlier_batch.allocate(line)
