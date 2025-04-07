@@ -1,7 +1,7 @@
 import pytest
 from datetime import date, timedelta
 
-from .model import Batch, OrderLine, allocate
+from .model import Batch, OrderLine, OutOfStock, allocate
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
@@ -120,7 +120,7 @@ def test_prefers_warehouse_batches_to_shipments():
         quantity=10,
     )
 
-    allocate(line, [warehouse_batch, medium, latest])
+    _ = allocate(line, [warehouse_batch, medium, latest])
 
     assert warehouse_batch.available_quantity == 90
     assert medium.available_quantity == 100
@@ -152,12 +152,28 @@ def test_prefers_earlier_batches():
         quantity=10,
     )
 
-    allocate(line, [earliest, medium, latest])
+    _ = allocate(line, [earliest, medium, latest])
 
     assert earliest.available_quantity == 90
     assert medium.available_quantity == 100
     assert latest.available_quantity == 100
 
 
-def test_allocate_to_earliest_batch_with_capacity():
-    pytest.xfail("TODO")
+def test_raises_out_of_stock_exception_if_cannot_allocate():
+    batch = Batch(
+        reference="batch1",
+        sku="SMALL-FORK",
+        quantity=10,
+        eta=today,
+    )
+
+    _ = allocate(
+        OrderLine(sku="SMALL-FORK", quantity=10, order_reference="order1"),
+        [batch],
+    )
+
+    with pytest.raises(OutOfStock, match="SMALL-FORK"):
+        _ = allocate(
+            OrderLine(sku="SMALL-FORK", quantity=1, order_reference="order2"),
+            [batch],
+        )

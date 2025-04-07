@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 from datetime import date
-from operator import attrgetter
 from typing import override
+
+
+class OutOfStock(Exception):
+    pass
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -66,18 +69,23 @@ class Batch:
     def __hash__(self) -> int:
         return hash(self.reference)
 
+    def __gt__(self, other: object):
+        if not isinstance(other, Batch):
+            raise TypeError("You must compare instances of Batch")
 
-def allocate(line: OrderLine, batches: list[Batch]):
-    warehouse_batches = get_warehouse_batches(batches)
+        if self.eta is None:
+            return False
+        if other.eta is None:
+            return True
 
-    if len(warehouse_batches):
-        warehouse_batches[0].allocate(line)
-        return
-
-    [earlier_batch, *_tail] = sorted(batches, key=attrgetter("eta"))
-
-    earlier_batch.allocate(line)
+        return self.eta > other.eta
 
 
-def get_warehouse_batches(batches: list[Batch]):
-    return list(filter(lambda x: x.eta is None, batches))
+def allocate(line: OrderLine, batches: list[Batch]) -> str:
+    try:
+        batch = next(b for b in sorted(batches) if b.can_allocate(line))
+        batch.allocate(line)
+
+        return batch.reference
+    except StopIteration:
+        raise OutOfStock(f"Out of stock for sku {line.sku}")
