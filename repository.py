@@ -18,6 +18,8 @@ class AbstractRepository(ABC):
 
 
 class SqlAlchemyRepository(AbstractRepository):
+    _session: Session
+
     def __init__(self, session: Session):
         self._session = session
 
@@ -27,4 +29,10 @@ class SqlAlchemyRepository(AbstractRepository):
 
     @override
     def get(self, reference: str) -> Batch:
-        return self._session.query(Batch).where(Batch.reference == reference).scalar()
+        return (
+            self._session.query(Batch)
+            .where(
+                Batch.reference == reference,
+            )
+            .scalar()
+        )
