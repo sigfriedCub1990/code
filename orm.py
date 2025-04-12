@@ -1,11 +1,8 @@
-from sqlalchemy import Column, ForeignKey, MetaData, String, Table, create_engine
+from sqlalchemy import Column, ForeignKey, MetaData, String, Table
 from sqlalchemy.orm import mapper, relationship, sessionmaker
 from sqlalchemy.types import Date, Integer
 
 from .model import Batch, OrderLine
-
-
-engine = create_engine("sqlite://", echo=True)
 
 metadata = MetaData()
 
@@ -35,14 +32,8 @@ allocations = Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("batch_id", ForeignKey("batches.id")),
-    Column("order_id", ForeignKey("order_lines.id")),
+    Column("orderline_id", ForeignKey("order_lines.id")),
 )
-
-
-class SessionFactory:
-    @staticmethod
-    def create_session():
-        return sessionmaker(bind=engine)()
 
 
 def start_mappers():
@@ -58,7 +49,3 @@ def start_mappers():
             )
         },
     )
-
-
-metadata.create_all(bind=engine)
-start_mappers()
