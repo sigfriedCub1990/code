@@ -1,14 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional, List, Set
+from typing import override
 
 
 class OutOfStock(Exception):
     pass
 
 
-def allocate(line: OrderLine, batches: List[Batch]) -> str:
+def allocate(line: OrderLine, batches: list[Batch]) -> str:
     try:
         batch = next(b for b in sorted(batches) if b.can_allocate(line))
         batch.allocate(line)
@@ -17,33 +17,49 @@ def allocate(line: OrderLine, batches: List[Batch]) -> str:
         raise OutOfStock(f"Out of stock for sku {line.sku}")
 
 
-@dataclass(frozen=True)
 class OrderLine:
     orderid: str
     sku: str
     qty: int
 
+    def __init__(self, orderid: str, sku: str, qty: int) -> None:
+        self.orderid = orderid
+        self.sku = sku
+        self.qty = qty
+
+    @override
+    def __eq__(self, value: object, /) -> bool:
+        if not isinstance(value, OrderLine):
+            raise ValueError
+
+        return all(
+            [
+                self.orderid == value.orderid,
+                self.sku == value.sku,
+                self.qty == value.qty,
+            ]
+        )
+
+    @override
+    def __hash__(self) -> int:
+        return hash(f"{self.orderid}-{self.sku}-{self.qty}")
+
 
 class Batch:
-    def __init__(self, ref: str, sku: str, qty: int, eta: Optional[date]):
+    reference: str
+    sku: str
+    eta: date | None
+    _purchased_quantity: int
+    _allocations: set[OrderLine]
+
+    def __init__(self, ref: str, sku: str, qty: int, eta: date | None):
         self.reference = ref
         self.sku = sku
         self.eta = eta
         self._purchased_quantity = qty
-        self._allocations = set()  # type: Set[OrderLine]
+        self._allocations = set()
 
-    def __repr__(self):
-        return f"<Batch {self.reference}>"
-
-    def __eq__(self, other):
-        if not isinstance(other, Batch):
-            return False
-        return other.reference == self.reference
-
-    def __hash__(self):
-        return hash(self.reference)
-
-    def __gt__(self, other):
+    def __gt__(self, other: object) -> bool:
         if self.eta is None:
             return False
         if other.eta is None:
@@ -58,6 +74,23 @@ class Batch:
         if line in self._allocations:
             self._allocations.remove(line)
 
+    def can_allocate(self, line: OrderLine) -> bool:
+        return self.sku == line.sku and self.available_quantity >= line.qty
+
+    @override
+    def __repr__(self):
+        return f"<Batch {self.reference}>"
+
+    @override
+    def __eq__(self, other: object):
+        if not isinstance(other, Batch):
+            return False
+        return other.reference == self.reference
+
+    @override
+    def __hash__(self):
+        return hash(self.reference)
+
     @property
     def allocated_quantity(self) -> int:
         return sum(line.qty for line in self._allocations)
@@ -65,6 +98,3 @@ class Batch:
     @property
     def available_quantity(self) -> int:
         return self._purchased_quantity - self.allocated_quantity
-
-    def can_allocate(self, line: OrderLine) -> bool:
-        return self.sku == line.sku and self.available_quantity >= line.qty
