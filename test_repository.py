@@ -102,3 +102,18 @@ def test_repository_can_retrieve_a_batch_with_allocations(
             qty=10,
         )
     }
+
+
+@pytest.mark.usefixtures("batch")
+def test_repository_can_retrieve_a_list_of_batches(session: Session):
+    repo = SqlAlchemyRepository(session)
+    batches = repo.all()
+
+    batch1 = Batch(
+        ref="batch4",
+        sku="ROLLERCOASTER",
+        qty=100,
+        eta=None,
+    )
+
+    assert batches == [batch1]

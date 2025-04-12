@@ -16,6 +16,10 @@ class AbstractRepository(ABC):
     def get(self, reference: str) -> Batch:
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def all(self) -> list[Batch]:
+        raise NotImplementedError
+
 
 class SqlAlchemyRepository(AbstractRepository):
     _session: Session
@@ -36,3 +40,7 @@ class SqlAlchemyRepository(AbstractRepository):
             )
             .scalar()
         )
+
+    @override
+    def all(self) -> list[Batch]:
+        return self._session.query(Batch).all()
